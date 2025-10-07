@@ -15,4 +15,3 @@ Route::resource('notes', NoteController::class);
 Route::patch('/notes/{id}/toggle-pin', [NoteController::class, 'togglePin'])->name('notes.togglePin');
 Route::get('/test', [App\Http\Controllers\TestController::class, 'index']);
 Route::get('/', [NoteController::class, 'index'])->name('notes.index');
-Route::resource('notes', NoteController::class);

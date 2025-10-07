@@ -9,12 +9,11 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-    ];
+    protected $fillable = ['name'];
+
+    // Relasi: 1 Category punya banyak Note
     public function notes()
     {
         return $this->hasMany(Note::class);
     }
-
 }

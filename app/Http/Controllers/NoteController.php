@@ -12,68 +12,53 @@ class NoteController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Note::query();
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%$search%")
-                    ->orWhere('content', 'like', "%$search%");
-            });
-        }
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('created_date', $request->date);
-        }
-
-        $notes = $query->orderByDesc('is_pinned')
-                        ->orderBy('created_date', 'desc')
-                        ->paginate(10);
+        $notes = Note::with('category') // eager loading
+                    ->when($request->filled('search'), fn($q) => 
+                        $q->where(fn($query) => 
+                            $query->where('title', 'like', "%{$request->search}%")
+                                ->orWhere('content', 'like', "%{$request->search}%")
+                        )
+                    )
+                    ->when($request->filled('category_id'), fn($q) => 
+                        $q->where('category_id', $request->category_id)
+                    )
+                    ->when($request->filled('date'), fn($q) => 
+                        $q->whereDate('created_date', $request->date)
+                    )
+                    ->orderByDesc('is_pinned')
+                    ->orderByDesc('created_date')
+                    ->paginate(10)
+                     ->withQueryString(); // mempertahankan filter saat pagination
 
         $categories = Category::all();
 
         return view('notes.index', compact('notes', 'categories'));
     }
 
-    // Form tambah catatan
     public function create()
     {
-        $categories = Category::all();
+        $categories = Category::all(); // untuk select box lebih ringkas
         return view('notes.create', compact('categories'));
     }
 
-    // Simpan catatan baru
     public function store(NoteStoreRequest $request)
     {
-        $data = $request->validated();
-
-        Note::create($data);
-
+        Note::create($request->validated());
         return redirect()->route('notes.index')->with('success', 'Catatan berhasil dibuat');
     }
 
-    // Form edit catatan
     public function edit(Note $note)
     {
-        $categories = Category::all();
+        $categories = Category::pluck('name', 'id');
         return view('notes.edit', compact('note', 'categories'));
     }
 
-    // Update catatan
-    public function update(NoteUpdateRequest $request)
+    public function update(NoteUpdateRequest $request, Note $note)
     {
-        $data = $request->validated();
-
-        Note::update($data);
-
+        $note->update($request->validated());
         return redirect()->route('notes.index')->with('success', 'Catatan berhasil diupdate');
     }
 
-    // Hapus catatan
     public function destroy(Note $note)
     {
         $note->delete();

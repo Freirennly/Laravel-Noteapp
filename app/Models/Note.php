@@ -9,19 +9,15 @@ class Note extends Model
 {
     use HasFactory;
 
-    // Izinkan mass-assignment
     protected $fillable = [
         'title',
         'content',
-        'category_id',
-        'is_pinned',
         'created_date',
+        'is_pinned',
+        'category_id',
     ];
 
-    // Kalau tidak pakai created_at & updated_at bawaan Laravel
-    public $timestamps = false;
-
-    // Relasi ke Category
+    // Relasi: 1 Note belongsTo 1 Category
     public function category()
     {
         return $this->belongsTo(Category::class);
